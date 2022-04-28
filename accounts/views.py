@@ -12,7 +12,7 @@ from django.contrib.auth.models import Group
 
 # Create your views here.
 from .models import *
-from .forms import OrderForm, CreateUserForm
+from .forms import OrderForm, CreateUserForm,StudentForm
 from .filters import OrderFilter
 from .decorators import unauthenticated_user, allowed_users, admin_only
 
@@ -105,16 +105,16 @@ def student(request, pk_test):
 	return render(request, 'accounts/students.html',context)
 
 @login_required(login_url='login')
-@allowed_users(allowed_roles=['admin'])
-def createOrder(request):
+@allowed_users(allowed_roles=['admin','student'])
+def createOrder(request,pk):
 	OrderFormSet = inlineformset_factory(Student, Order, fields=('book', 'status'), extra=10 )
-	#student = Student.objects.get(id=pk)
-	formset = OrderFormSet(queryset=Order.objects.none())
+	student = Student.objects.get(id=pk)
+	formset = OrderFormSet(queryset=Order.objects.none(),instance=student)
 	#form = OrderForm(initial={'customer':customer})
 	if request.method == 'POST':
 		#print('Printing POST:', request.POST)
 		form = OrderForm(request.POST)
-		formset = OrderFormSet(request.POST)
+		formset = OrderFormSet(request.POST,instance=student)
 		if formset.is_valid():
 			formset.save()
 			return redirect('/')
@@ -148,3 +148,24 @@ def deleteOrder(request, pk):
 
 	context = {'item':order}
 	return render(request, 'accounts/delete.html', context)
+
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['admin'])
+def createStudent(request):
+	form = StudentForm()
+	if request.method == 'POST':
+		form = StudentForm(request.POST)
+		if form.is_valid():
+			user = form.save()
+			username = form.cleaned_data.get('name')
+
+			group = Group.objects.get(name='student')
+			user.groups.add(group)
+
+			messages.success(request, 'Account was created for ' + username)
+
+			return redirect('/')
+		
+
+	context = {'form':form}
+	return render(request, 'accounts/students.html', context)
