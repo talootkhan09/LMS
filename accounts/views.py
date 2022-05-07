@@ -15,6 +15,7 @@ from .models import *
 from .forms import OrderForm, CreateUserForm,StudentForm
 from .filters import OrderFilter
 from .decorators import unauthenticated_user, allowed_users, admin_only
+from .constants import ADMIN, STUDENT
 
 @unauthenticated_user
 def registerPage(request):
@@ -23,11 +24,12 @@ def registerPage(request):
 	if request.method == 'POST':
 		form = CreateUserForm(request.POST)
 		if form.is_valid():
-			user = form.save()
-			username = form.cleaned_data.get('username')
+			student = form.save()
+			username = form.cleaned_data.get('name')
 
 			group = Group.objects.get(name='student')
-			user.groups.add(group)
+			student.groups.add(group)
+			Student.objects.create(student=student,)
 
 			messages.success(request, 'Account was created for ' + username)
 
@@ -77,20 +79,23 @@ def home(request):
 
 	return render(request, 'accounts/dashboard.html', context)
 
+@login_required(login_url='login')
+@allowed_users(allowed_roles=[STUDENT])
 def userPage(request):
-	context = {}
+	orders= request.user.student.order_set.all()
+	context = {'orders':orders}
 	return render(request, 'accounts/user.html', context)
 
 
 @login_required(login_url='login')
-@allowed_users(allowed_roles=['admin','student'])
+@allowed_users(allowed_roles=[ADMIN,STUDENT])
 def books(request):
 	books = Book.objects.all()
 
 	return render(request, 'accounts/books.html', {'books':books})
 
 @login_required(login_url='login')
-@allowed_users(allowed_roles=['admin'])
+@allowed_users(allowed_roles=[ADMIN])
 def student(request, pk_test):
 	student = Student.objects.get(id=pk_test)
 
@@ -105,7 +110,7 @@ def student(request, pk_test):
 	return render(request, 'accounts/students.html',context)
 
 @login_required(login_url='login')
-@allowed_users(allowed_roles=['admin','student'])
+@allowed_users(allowed_roles=[ADMIN,STUDENT])
 def createOrder(request,pk):
 	OrderFormSet = inlineformset_factory(Student, Order, fields=('book', 'status'), extra=10 )
 	student = Student.objects.get(id=pk)
@@ -113,7 +118,6 @@ def createOrder(request,pk):
 	#form = OrderForm(initial={'customer':customer})
 	if request.method == 'POST':
 		#print('Printing POST:', request.POST)
-		form = OrderForm(request.POST)
 		formset = OrderFormSet(request.POST,instance=student)
 		if formset.is_valid():
 			formset.save()
@@ -123,7 +127,7 @@ def createOrder(request,pk):
 	return render(request, 'accounts/order_form.html', context)
 
 @login_required(login_url='login')
-@allowed_users(allowed_roles=['admin'])
+@allowed_users(allowed_roles=[ADMIN])
 def updateOrder(request, pk):
 
 	order = Order.objects.get(id=pk)
@@ -139,7 +143,7 @@ def updateOrder(request, pk):
 	return render(request, 'accounts/order_form.html', context)
 
 @login_required(login_url='login')
-@allowed_users(allowed_roles=['admin'])
+@allowed_users(allowed_roles=[ADMIN])
 def deleteOrder(request, pk):
 	order = Order.objects.get(id=pk)
 	if request.method == "POST":
@@ -150,17 +154,19 @@ def deleteOrder(request, pk):
 	return render(request, 'accounts/delete.html', context)
 
 @login_required(login_url='login')
-@allowed_users(allowed_roles=['admin'])
+@allowed_users(allowed_roles=[ADMIN])
 def createStudent(request):
 	form = StudentForm()
 	if request.method == 'POST':
 		form = StudentForm(request.POST)
 		if form.is_valid():
 			user = form.save()
-			username = form.cleaned_data.get('name')
+			username = form.cleaned_data.get('username')
 
 			group = Group.objects.get(name='student')
 			user.groups.add(group)
+			
+			Student.objects.create(user=user)
 
 			messages.success(request, 'Account was created for ' + username)
 
@@ -168,4 +174,4 @@ def createStudent(request):
 		
 
 	context = {'form':form}
-	return render(request, 'accounts/students.html', context)
+	return render(request, 'accounts/student_form.html', context)

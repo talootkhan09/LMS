@@ -1,14 +1,17 @@
 from telnetlib import STATUS
+from tkinter import CASCADE
 from unicodedata import category, name
 from django.db import models
+from django.contrib.auth.models import User
 
 class Student(models.Model):
+    user =models.OneToOneField(User,null=True, on_delete=models.CASCADE,related_name='name')
     name= models.CharField(max_length=200, null=True)
     phone= models.CharField(max_length=200, null=True)
     email = models.CharField(max_length=200, null=True)
 
     def __str__(self):
-        return self.name
+        return str(self.name)
 
 class Book(models.Model):
      GENRE = (
