@@ -24,14 +24,19 @@ def registerPage(request):
 	if request.method == 'POST':
 		form = CreateUserForm(request.POST)
 		if form.is_valid():
-			student = form.save()
-			username = form.cleaned_data.get('name')
+			user = form.save()
+			username = form.cleaned_data.get('username')
+			useremail= form.cleaned_data.get('email')
 
 			group = Group.objects.get(name='student')
-			student.groups.add(group)
-			Student.objects.create(student=student,)
+			user.groups.add(group)
+			Student.objects.create(
+				user=user,
+				name=user.username,
+				email=user.email,
+				)
 
-			messages.success(request, 'Account was created for ' + username)
+			messages.success(request, 'Account was created for ' + username +'with email' + useremail)
 
 			return redirect('login')
 		
@@ -162,16 +167,32 @@ def createStudent(request):
 		if form.is_valid():
 			user = form.save()
 			username = form.cleaned_data.get('username')
+			useremail= form.cleaned_data.get('email')
 
 			group = Group.objects.get(name='student')
 			user.groups.add(group)
-			
-			Student.objects.create(user=user)
+			Student.objects.create(
+				user=user,
+				name=user.username,
+				email=user.email,
+				)
 
-			messages.success(request, 'Account was created for ' + username)
+			messages.success(request, 'Account was created for ' + username +'with email' + useremail)
 
 			return redirect('/')
 		
 
 	context = {'form':form}
 	return render(request, 'accounts/student_form.html', context)
+
+@login_required(login_url='login')
+@allowed_users(allowed_roles=[ADMIN])
+def deleteStudent(request, pk):
+	student = Student.objects.get(id=pk)
+	if request.method == "POST":
+		student.delete()
+		return redirect('/')
+
+	context = {'student':student}
+	return render(request, 'accounts/deleteStudent.html', context)
+	

@@ -13,3 +13,4 @@ class OrderFilter(django_filters.FilterSet):
 		model = Order
 		fields = '__all__'
 		exclude = ['student', 'date_created']
+		
