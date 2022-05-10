@@ -23,7 +23,11 @@
       <li class="nav-item">
         <a class="nav-link" href="{% url 'books' %}">Books</a>
       </li>
-      
+      {% if not request.user.is_staff %}
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'create_order' user.id %}">Place Order</a>
+      </li>
+      {% endif %}
     </ul>
   </div>
 
