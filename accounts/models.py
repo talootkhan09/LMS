@@ -12,14 +12,10 @@ class Student(models.Model):
     def __str__(self):
         return str(self.name)
 
-class Book(models.Model):
-    GENRE = (
-        ('Physics', 'Physics'),
-        ('Computer','Computer'),
-    )       
+class Book(models.Model):      
     name = models.CharField(max_length=200, null=True)
     price= models.FloatField(null=True)
-    category=models.CharField(max_length=200, null=True, choices=GENRE)
+    category=models.CharField(max_length=200, null=True)
 
     def __str__(self):
         return str(self.name)

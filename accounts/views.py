@@ -12,7 +12,7 @@ from django.contrib.auth.models import Group
 
 # Create your views here.
 from .models import *
-from .forms import OrderForm, CreateUserForm,StudentForm
+from .forms import OrderForm, CreateUserForm,StudentForm, BookForm
 from .filters import OrderFilter
 from .decorators import unauthenticated_user, allowed_users, admin_only
 from .constants import ADMIN, STUDENT
@@ -20,7 +20,6 @@ from .constants import ADMIN, STUDENT
 @unauthenticated_user
 def registerPage(request):
 
-<<<<<<< HEAD
     form = CreateUserForm()
     if request.method == 'POST':
         form = CreateUserForm(request.POST)
@@ -32,29 +31,12 @@ def registerPage(request):
             group = Group.objects.get(name='student')
             user.groups.add(group)
             Student.objects.create(
-=======
-	form = CreateUserForm()
-	if request.method == 'POST':
-		form = CreateUserForm(request.POST)
-		if form.is_valid():
-			user = form.save()
-			username = form.cleaned_data.get('username')
-			useremail= form.cleaned_data.get('email')
-
-			group = Group.objects.get(name='student')
-			user.groups.add(group)
-			Student.objects.create(
->>>>>>> 2e2e15d917552dfcb8a5d3967789936df997672f
 				user=user,
 				name=user.username,
 				email=user.email,
 				)
 
-<<<<<<< HEAD
             messages.success(request, f"Account was created for {username}" )
-=======
-			messages.success(request, 'Account was created for ' + username +'with email' + useremail)
->>>>>>> 2e2e15d917552dfcb8a5d3967789936df997672f
 
             return redirect('login')
 
@@ -105,8 +87,9 @@ def home(request):
 @login_required(login_url='login')
 @allowed_users(allowed_roles=[STUDENT])
 def userPage(request):
+    id= request.user.id
     orders= request.user.student.order_set.all()
-    context = {'orders':orders}
+    context = {'orders':orders, 'id':id}
     return render(request, 'accounts/user.html', context)
 
 @login_required(login_url='login')
@@ -115,6 +98,38 @@ def books(request):
     books = Book.objects.all()
 
     return render(request, 'accounts/books.html', {'books':books})
+
+@login_required(login_url='login')
+@allowed_users(allowed_roles=[ADMIN])
+def createBook(request):
+    form = BookForm()
+    if request.method == 'POST':
+        form = BookForm(request.POST)
+        if form.is_valid():
+            book = form.save()
+
+            Book.objects.create(
+				
+				name=book.name,
+				price=book.price,
+				category=book.category
+				)
+
+            return redirect('books')
+
+    context = {'form':form}
+    return render(request, 'accounts/book_form.html', context)
+
+@login_required(login_url='login')
+@allowed_users(allowed_roles=[ADMIN])
+def deleteBook(request, pk):
+    book = Book.objects.get(id=pk)
+    if request.method == "POST":
+        book.delete()
+        return redirect('/books')
+
+    context = {'book':book}
+    return render(request, 'accounts/deleteBook.html', context)
 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=[ADMIN])
@@ -147,7 +162,7 @@ def createOrder(request,pk):
 	return render(request, 'accounts/order_form.html', context)
 
 @login_required(login_url='login')
-@allowed_users(allowed_roles=[ADMIN])
+@allowed_users(allowed_roles=[ADMIN,STUDENT])
 def updateOrder(request, pk):
 
     order = Order.objects.get(id=pk)
@@ -176,7 +191,6 @@ def deleteOrder(request, pk):
 @login_required(login_url='login')
 @allowed_users(allowed_roles=[ADMIN])
 def createStudent(request):
-<<<<<<< HEAD
     form = StudentForm()
     if request.method == 'POST':
         form = StudentForm(request.POST)
@@ -188,45 +202,22 @@ def createStudent(request):
             group = Group.objects.get(name='student')
             user.groups.add(group)
             Student.objects.create(
-=======
-	form = StudentForm()
-	if request.method == 'POST':
-		form = StudentForm(request.POST)
-		if form.is_valid():
-			user = form.save()
-			username = form.cleaned_data.get('username')
-			useremail= form.cleaned_data.get('email')
-
-			group = Group.objects.get(name='student')
-			user.groups.add(group)
-			Student.objects.create(
->>>>>>> 2e2e15d917552dfcb8a5d3967789936df997672f
 				user=user,
 				name=user.username,
 				email=user.email,
 				)
 
-<<<<<<< HEAD
             messages.success(request, f"Account was created for {username}" )
-=======
-			messages.success(request, 'Account was created for ' + username +'with email' + useremail)
->>>>>>> 2e2e15d917552dfcb8a5d3967789936df997672f
 
             return redirect('/')
 
-<<<<<<< HEAD
 
     context = {'form':form}
     return render(request, 'accounts/student_form.html', context)
-=======
-	context = {'form':form}
-	return render(request, 'accounts/student_form.html', context)
->>>>>>> 2e2e15d917552dfcb8a5d3967789936df997672f
 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=[ADMIN])
 def deleteStudent(request, pk):
-<<<<<<< HEAD
     student = Student.objects.get(id=pk)
     if request.method == "POST":
         student.delete()
@@ -234,13 +225,3 @@ def deleteStudent(request, pk):
 
     context = {'student':student}
     return render(request, 'accounts/deleteStudent.html', context)
-=======
-	student = Student.objects.get(id=pk)
-	if request.method == "POST":
-		student.delete()
-		return redirect('/')
-
-	context = {'student':student}
-	return render(request, 'accounts/deleteStudent.html', context)
-	
->>>>>>> 2e2e15d917552dfcb8a5d3967789936df997672f
