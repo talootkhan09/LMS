@@ -1,7 +1,5 @@
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
 from django.forms import inlineformset_factory
-from django.contrib.auth.forms import UserCreationForm
 
 from django.contrib.auth import authenticate, login, logout
 
@@ -18,7 +16,7 @@ from .decorators import unauthenticated_user, allowed_users, admin_only
 from .constants import ADMIN, STUDENT
 
 @unauthenticated_user
-def registerPage(request):
+def register_page(request):
 
     form = CreateUserForm()
     if request.method == 'POST':
@@ -44,7 +42,7 @@ def registerPage(request):
     return render(request, 'accounts/register.html', context)
 
 @unauthenticated_user
-def loginPage(request):
+def login_page(request):
 
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -61,7 +59,7 @@ def loginPage(request):
     context = {}
     return render(request, 'accounts/login.html', context)
 
-def logoutUser(request):
+def logout_user(request):
     logout(request)
     return redirect('login')
 
@@ -86,7 +84,7 @@ def home(request):
 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=[STUDENT])
-def userPage(request):
+def user_page(request):
     id= request.user.id
     orders= request.user.student.order_set.all()
     context = {'orders':orders, 'id':id}
@@ -101,7 +99,7 @@ def books(request):
 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=[ADMIN])
-def createBook(request):
+def create_book(request):
     form = BookForm()
     if request.method == 'POST':
         form = BookForm(request.POST)
@@ -109,7 +107,6 @@ def createBook(request):
             book = form.save()
 
             Book.objects.create(
-				
 				name=book.name,
 				price=book.price,
 				category=book.category
@@ -122,7 +119,7 @@ def createBook(request):
 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=[ADMIN])
-def deleteBook(request, pk):
+def delete_book(request, pk):
     book = Book.objects.get(id=pk)
     if request.method == "POST":
         book.delete()
@@ -134,36 +131,35 @@ def deleteBook(request, pk):
 @login_required(login_url='login')
 @allowed_users(allowed_roles=[ADMIN])
 def student(request, pk_test):
-	student = Student.objects.get(id=pk_test)
+    student = Student.objects.get(id=pk_test)
+    orders = student.order_set.all()
+    order_count = orders.count()
 
-	orders = student.order_set.all()
-	order_count = orders.count()
+    myFilter = OrderFilter(request.GET, queryset=orders)
+    orders = myFilter.qs
 
-	myFilter = OrderFilter(request.GET, queryset=orders)
-	orders = myFilter.qs 
-
-	context = {'student':student, 'orders':orders, 'order_count':order_count,
-	'myFilter':myFilter}
-	return render(request, 'accounts/students.html',context)
-
-@login_required(login_url='login')
-@allowed_users(allowed_roles=[ADMIN,STUDENT])
-def createOrder(request,pk):
-	OrderFormSet = inlineformset_factory(Student, Order, fields=('book', 'status'), extra=5 )
-	student = Student.objects.get(id=pk)
-	formset = OrderFormSet(queryset=Order.objects.none(),instance=student)
-	if request.method == 'POST':
-		formset = OrderFormSet(request.POST,instance=student)
-		if formset.is_valid():
-			formset.save()
-			return redirect('/')
-
-	context = {'form':formset}
-	return render(request, 'accounts/order_form.html', context)
+    context = {'student':student, 'orders':orders, 'order_count':order_count,
+    'myFilter':myFilter}
+    return render(request, 'accounts/students.html',context)
 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=[ADMIN,STUDENT])
-def updateOrder(request, pk):
+def create_order(request,pk):
+    OrderFormSet = inlineformset_factory(Student, Order, fields=('book', 'status'), extra=5 )
+    student = Student.objects.get(id=pk)
+    formset = OrderFormSet(queryset=Order.objects.none(),instance=student)
+    if request.method == 'POST':
+        formset = OrderFormSet(request.POST,instance=student)
+        if formset.is_valid():
+            formset.save()
+            return redirect('/')
+
+    context = {'form':formset}
+    return render(request, 'accounts/order_form.html', context)
+
+@login_required(login_url='login')
+@allowed_users(allowed_roles=[ADMIN,STUDENT])
+def update_order(request, pk):
 
     order = Order.objects.get(id=pk)
     form = OrderForm(instance=order)
@@ -179,7 +175,7 @@ def updateOrder(request, pk):
 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=[ADMIN])
-def deleteOrder(request, pk):
+def delete_order(request, pk):
     order = Order.objects.get(id=pk)
     if request.method == "POST":
         order.delete()
@@ -190,7 +186,7 @@ def deleteOrder(request, pk):
 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=[ADMIN])
-def createStudent(request):
+def create_student(request):
     form = StudentForm()
     if request.method == 'POST':
         form = StudentForm(request.POST)
@@ -217,7 +213,7 @@ def createStudent(request):
 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=[ADMIN])
-def deleteStudent(request, pk):
+def delete_student(request, pk):
     student = Student.objects.get(id=pk)
     if request.method == "POST":
         student.delete()
