@@ -1,4 +1,5 @@
-accounts/__pycache__
-accounts/migrations/__pycache__
-lms/__pycache__
+accounts/__pycache__/
+accounts/migrations/__pycache__/
+lms/__pycache__/
+db.sqlite3
 db.sqlite3

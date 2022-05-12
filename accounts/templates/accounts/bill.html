@@ -1,0 +1,32 @@
+{%  extends 'accounts/main.html' %}
+{% load static %}
+{% block content %}
+
+<br>
+<div class="row">
+	<div class="col-md-6">
+		<div class="card card-body">
+            <table class="table table-sm">
+				<p>BOOK NAME: {{order.book}}</p>
+			    <p>BOOK STATUS: {{order.status}}</p>
+                <p>BOOK BORROWED DATE: {{order.date_created}}</p>
+                <p>BOOK PRICE: {{price}}</p>
+                <p>TOTAL BILL: {{bill}}</p>
+                
+			</table>
+            <form action="{% url 'delete_order' order.id  %}" method="POST">
+				
+				{% csrf_token %}
+				<a class="btn btn-warning" href="{% url 'home' %}">Cancel</a>
+
+				<input class="btn btn-primary" type="submit" name="Return">
+			</form>
+
+
+			
+		
+		</div>
+	</div>
+</div>
+
+{% endblock %}

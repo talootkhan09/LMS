@@ -18,6 +18,7 @@
 					<td>{{order.book}}</td>
 					<td>{{order.status}}</td>
 					<td><a class="btn btn-sm btn-info" href="{% url 'update_order' order.id %}">Update</a></td>
+					<td><a class="btn btn-sm btn-info" href="{% url 'bill' order.id %}">Return</a></td>
 					
                 </tr>
 				{% endfor %}
