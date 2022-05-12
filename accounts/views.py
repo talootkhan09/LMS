@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.shortcuts import render, redirect
 from django.forms import inlineformset_factory
 
@@ -14,6 +15,7 @@ from .forms import OrderForm, CreateUserForm,StudentForm, BookForm
 from .filters import OrderFilter
 from .decorators import unauthenticated_user, allowed_users, admin_only
 from .constants import ADMIN, STUDENT
+from datetime import date
 
 @unauthenticated_user
 def register_page(request):
@@ -174,7 +176,7 @@ def update_order(request, pk):
     return render(request, 'accounts/order_form.html', context)
 
 @login_required(login_url='login')
-@allowed_users(allowed_roles=[ADMIN])
+@allowed_users(allowed_roles=[ADMIN,STUDENT])
 def delete_order(request, pk):
     order = Order.objects.get(id=pk)
     if request.method == "POST":
@@ -183,6 +185,20 @@ def delete_order(request, pk):
 
     context = {'item':order}
     return render(request, 'accounts/delete.html', context)
+
+@login_required(login_url='login')
+@allowed_users(allowed_roles=[ADMIN, STUDENT])
+def bill_order(request, pk):
+    orders = Order.objects.get(id=pk)
+    price = orders.book.price
+    dates =(date.today() - orders.date_created).days
+    bill =dates * price
+    if request.method == "POST":
+        orders.delete()
+        return redirect('/')
+
+    context = {'order':orders, 'price':price, 'bill':bill, 'date':dates}
+    return render(request, 'accounts/bill.html',context)
 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=[ADMIN])
