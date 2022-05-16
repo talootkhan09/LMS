@@ -8,9 +8,16 @@ from django.contrib import messages
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
+from django.urls import reverse_lazy
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic import (View,TemplateView,
+                                ListView,DetailView,
+                                CreateView,DeleteView,
+                                UpdateView)
 
 # Create your views here.
 from .models import *
+from . import models
 from .forms import OrderForm, CreateUserForm,StudentForm, BookForm
 from .filters import OrderFilter
 from .decorators import unauthenticated_user, allowed_users, admin_only
@@ -92,43 +99,59 @@ def user_page(request):
     context = {'orders':orders, 'id':id}
     return render(request, 'accounts/user.html', context)
 
+class BookListView(LoginRequiredMixin, ListView):
+    model = models.Book
+
+class BookDetailView(LoginRequiredMixin,DetailView):
+    context_object_name = 'book_details'
+    model = models.Book
+    template_name = 'accounts/book_detail.html'
+
+class BookCreateView(LoginRequiredMixin,CreateView):
+    fields = ("name","price","category")
+    model = models.Book
+
+class BookUpdateView(LoginRequiredMixin,UpdateView):
+    fields = ("name","price")
+    model = models.Book
+
+class BookDeleteView(LoginRequiredMixin,DeleteView):
+    model = models.Book
+    success_url = reverse_lazy("books")
+
+class OrderListView(LoginRequiredMixin, ListView):
+    model = models.Order
+
+class OrderCreateView(LoginRequiredMixin,CreateView):
+    fields = ("student","book","status")
+    model = models.Order
+
+class OrderUpdateView(LoginRequiredMixin,UpdateView):
+    fields = ("book","status")
+    model = models.Order
+
+class OrderDeleteView(LoginRequiredMixin,DeleteView):
+    model = models.Order
+    success_url = reverse_lazy('home')
+
 @login_required(login_url='login')
-@allowed_users(allowed_roles=[ADMIN,STUDENT])
-def books(request):
-    books = Book.objects.all()
-
-    return render(request, 'accounts/books.html', {'books':books})
-
-@login_required(login_url='login')
-@allowed_users(allowed_roles=[ADMIN])
-def create_book(request):
-    form = BookForm()
-    if request.method == 'POST':
-        form = BookForm(request.POST)
-        if form.is_valid():
-            book = form.save()
-
-            Book.objects.create(
-				name=book.name,
-				price=book.price,
-				category=book.category
-				)
-
-            return redirect('books')
-
-    context = {'form':form}
-    return render(request, 'accounts/book_form.html', context)
-
-@login_required(login_url='login')
-@allowed_users(allowed_roles=[ADMIN])
-def delete_book(request, pk):
-    book = Book.objects.get(id=pk)
+@allowed_users(allowed_roles=[ADMIN, STUDENT])
+def bill_order(request, pk):
+    orders = Order.objects.get(id=pk)
+    price = orders.book.price
+    dates =(date.today() - orders.date_created).days
+    bill =price + dates * price
     if request.method == "POST":
-        book.delete()
-        return redirect('/books')
+        orders.delete()
+        return redirect('/')
 
-    context = {'book':book}
-    return render(request, 'accounts/deleteBook.html', context)
+    context = {'order':orders, 'price':price, 'bill':bill, 'date':dates}
+    return render(request, 'accounts/bill.html',context)
+
+class StudentDetailView(LoginRequiredMixin,DetailView):
+    context_object_name = 'student_details'
+    model = models.Student
+    template_name = 'accounts/student_detail.html'    
 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=[ADMIN])
@@ -144,61 +167,14 @@ def student(request, pk_test):
     'myFilter':myFilter}
     return render(request, 'accounts/students.html',context)
 
-@login_required(login_url='login')
-@allowed_users(allowed_roles=[ADMIN,STUDENT])
-def create_order(request,pk):
-    OrderFormSet = inlineformset_factory(Student, Order, fields=('book', 'status'), extra=5 )
-    student = Student.objects.get(id=pk)
-    formset = OrderFormSet(queryset=Order.objects.none(),instance=student)
-    if request.method == 'POST':
-        formset = OrderFormSet(request.POST,instance=student)
-        if formset.is_valid():
-            formset.save()
-            return redirect('/')
+class StudentUpdateView(LoginRequiredMixin,UpdateView):
+    fields = ("phone","email")
+    model = models.Student
 
-    context = {'form':formset}
-    return render(request, 'accounts/order_form.html', context)
+class StudentDeleteView(LoginRequiredMixin,DeleteView):
+    model = models.Student
+    success_url = reverse_lazy('home')
 
-@login_required(login_url='login')
-@allowed_users(allowed_roles=[ADMIN,STUDENT])
-def update_order(request, pk):
-
-    order = Order.objects.get(id=pk)
-    form = OrderForm(instance=order)
-
-    if request.method == 'POST':
-        form = OrderForm(request.POST, instance=order)
-        if form.is_valid():
-            form.save()
-            return redirect('/')
-
-    context = {'form':form}
-    return render(request, 'accounts/order_form.html', context)
-
-@login_required(login_url='login')
-@allowed_users(allowed_roles=[ADMIN,STUDENT])
-def delete_order(request, pk):
-    order = Order.objects.get(id=pk)
-    if request.method == "POST":
-        order.delete()
-        return redirect('/')
-
-    context = {'item':order}
-    return render(request, 'accounts/delete.html', context)
-
-@login_required(login_url='login')
-@allowed_users(allowed_roles=[ADMIN, STUDENT])
-def bill_order(request, pk):
-    orders = Order.objects.get(id=pk)
-    price = orders.book.price
-    dates =(date.today() - orders.date_created).days
-    bill =dates * price
-    if request.method == "POST":
-        orders.delete()
-        return redirect('/')
-
-    context = {'order':orders, 'price':price, 'bill':bill, 'date':dates}
-    return render(request, 'accounts/bill.html',context)
 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=[ADMIN])
@@ -226,14 +202,3 @@ def create_student(request):
 
     context = {'form':form}
     return render(request, 'accounts/student_form.html', context)
-
-@login_required(login_url='login')
-@allowed_users(allowed_roles=[ADMIN])
-def delete_student(request, pk):
-    student = Student.objects.get(id=pk)
-    if request.method == "POST":
-        student.delete()
-        return redirect('/')
-
-    context = {'student':student}
-    return render(request, 'accounts/deleteStudent.html', context)

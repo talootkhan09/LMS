@@ -1,6 +1,7 @@
 from unicodedata import category, name
 from django.db import models
 from django.contrib.auth.models import User
+from django.urls import reverse
 
 class Student(models.Model):
     user =models.OneToOneField(User,null=True, on_delete=models.CASCADE)
@@ -19,6 +20,9 @@ class Book(models.Model):
     def __str__(self):
         return str(self.name)
 
+    def get_absolute_url(self):
+        return reverse("book_detail",kwargs={'pk':self.pk})    
+
 class Order(models.Model):
     STATUS= (
         ('Borrow','Borrow'),
@@ -30,4 +34,5 @@ class Order(models.Model):
 
     def __str__(self):
         return str(self.status)
-    
+    def get_absolute_url(self):
+        return reverse("home")

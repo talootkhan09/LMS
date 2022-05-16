@@ -22,7 +22,9 @@
 								<td>{{i.name}}</td>
 								<td>{{i.category}}</td>
 								<td>{{i.price}}</td>
+								{% if request.user.is_staff %}
 								<td><a class="btn btn-sm btn-danger" href="{% url 'delete_book' i.id %}">Delete</a></td>
+								{% endif %}
 							</tr>
 						{% endfor %}
 						

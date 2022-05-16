@@ -1,0 +1,26 @@
+{%  extends 'accounts/main.html' %}
+
+{% block content %}
+<div class="row">
+	<div class="col-md-6">
+		<div class="card card-body">
+            <table class="table table-sm">
+                <h1>Welcome to the Student Detail Page</h1>
+                <h2>Student Details:</h2>
+                <p>Id_num: {{student_details.id}}</p>
+                <p>Name: {{student_details.name}}</p>
+                <p>Phone: {{student_details.phone}}</p>
+                <p>Email: {{student_details.email}}</p>
+                <h3>Orders:</h3>
+
+                {% for order in student_details.order.all %}
+                <p>{{order.book}} who is {{order.status}} years old.</p>
+                {% endfor %}
+            </table>
+
+        </div>
+  
+    </div>
+</div>
+
+{% endblock %}
