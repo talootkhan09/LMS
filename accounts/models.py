@@ -12,6 +12,9 @@ class Student(models.Model):
     def __str__(self):
         return str(self.name)
 
+    def get_absolute_url(self):
+        return reverse("student",kwargs={'pk':self.pk})     
+
 class Book(models.Model):      
     name = models.CharField(max_length=200, null=True)
     price= models.FloatField(null=True)
@@ -27,7 +30,7 @@ class Order(models.Model):
     STATUS= (
         ('Borrow','Borrow'),
     )
-    student =models.ForeignKey(Student, null=True, on_delete=models.SET_NULL)
+    student =models.ForeignKey(Student, null=True, on_delete=models.SET_NULL, related_name='order')
     book =models.ForeignKey(Book, null=True, on_delete=models.SET_NULL)
     status =models.CharField(max_length=200, null=True, choices=STATUS)
     date_created =models.DateField(auto_now_add=True, null=True)

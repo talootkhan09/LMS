@@ -1,6 +1,4 @@
-from datetime import datetime
 from django.shortcuts import render, redirect
-from django.forms import inlineformset_factory
 
 from django.contrib.auth import authenticate, login, logout
 
@@ -9,17 +7,13 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
 from django.urls import reverse_lazy
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import (View,TemplateView,
-                                ListView,DetailView,
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.views.generic import (ListView,DetailView,
                                 CreateView,DeleteView,
                                 UpdateView)
-
-# Create your views here.
 from .models import *
 from . import models
-from .forms import OrderForm, CreateUserForm,StudentForm, BookForm
-from .filters import OrderFilter
+from .forms import CreateUserForm,StudentForm
 from .decorators import unauthenticated_user, allowed_users, admin_only
 from .constants import ADMIN, STUDENT
 from datetime import date
@@ -95,7 +89,7 @@ def home(request):
 @allowed_users(allowed_roles=[STUDENT])
 def user_page(request):
     id= request.user.id
-    orders= request.user.student.order_set.all()
+    orders= request.user.student.order.all()
     context = {'orders':orders, 'id':id}
     return render(request, 'accounts/user.html', context)
 
@@ -107,15 +101,18 @@ class BookDetailView(LoginRequiredMixin,DetailView):
     model = models.Book
     template_name = 'accounts/book_detail.html'
 
-class BookCreateView(LoginRequiredMixin,CreateView):
+class BookCreateView(PermissionRequiredMixin,CreateView):
+    permission_required = 'book.add_books'
     fields = ("name","price","category")
     model = models.Book
 
-class BookUpdateView(LoginRequiredMixin,UpdateView):
+class BookUpdateView(PermissionRequiredMixin,UpdateView):
+    permission_required = 'book.change_books'
     fields = ("name","price")
     model = models.Book
 
-class BookDeleteView(LoginRequiredMixin,DeleteView):
+class BookDeleteView(PermissionRequiredMixin,DeleteView):
+    permission_required = 'book.delete_books'
     model = models.Book
     success_url = reverse_lazy("books")
 
@@ -148,30 +145,19 @@ def bill_order(request, pk):
     context = {'order':orders, 'price':price, 'bill':bill, 'date':dates}
     return render(request, 'accounts/bill.html',context)
 
-class StudentDetailView(LoginRequiredMixin,DetailView):
+class StudentDetailView(PermissionRequiredMixin,DetailView):
+    permission_required = 'student.view_students'
     context_object_name = 'student_details'
     model = models.Student
     template_name = 'accounts/student_detail.html'    
 
-@login_required(login_url='login')
-@allowed_users(allowed_roles=[ADMIN])
-def student(request, pk_test):
-    student = Student.objects.get(id=pk_test)
-    orders = student.order_set.all()
-    order_count = orders.count()
-
-    myFilter = OrderFilter(request.GET, queryset=orders)
-    orders = myFilter.qs
-
-    context = {'student':student, 'orders':orders, 'order_count':order_count,
-    'myFilter':myFilter}
-    return render(request, 'accounts/students.html',context)
-
-class StudentUpdateView(LoginRequiredMixin,UpdateView):
-    fields = ("phone","email")
+class StudentUpdateView(PermissionRequiredMixin,UpdateView):
+    permission_required = 'student.change_students'
+    fields = ('email',)
     model = models.Student
 
-class StudentDeleteView(LoginRequiredMixin,DeleteView):
+class StudentDeleteView(PermissionRequiredMixin,DeleteView):
+    permission_required = 'student.delete_students'
     model = models.Student
     success_url = reverse_lazy('home')
 

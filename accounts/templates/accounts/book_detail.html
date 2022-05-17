@@ -16,10 +16,10 @@
   
     </div>
 </div>
-
+{% if request.user.is_staff %}
   <div class="container">
     <p><a class='btn btn-warning' href="{% url 'update_book' pk=book_details.pk %}">Update</a></p>
     <p><a class='btn btn-danger' href="{% url 'delete_book' pk=book_details.pk %}">Delete</a></p>
   </div>
-
+{% endif %}
 {% endblock %}

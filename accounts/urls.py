@@ -10,7 +10,7 @@ urlpatterns = [
     path('', views.home, name="home"),
     path('user/', views.user_page, name="user-page"),
     path('books/', views.BookListView.as_view(), name='books'),
-    path('student/<str:pk_test>/', views.student, name="student"),
+    path('student/<str:pk>/', views.StudentDetailView.as_view(), name="student"),
 
     path('create_order/<str:pk>/', views.OrderCreateView.as_view(), name="create_order"),
     path('update_order/<str:pk>/', views.OrderUpdateView.as_view(), name="update_order"),
