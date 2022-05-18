@@ -72,6 +72,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'lms.wsgi.application'
+AUTH_USER_MODEL ='accounts.User'
 
 
 # Database

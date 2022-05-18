@@ -1,7 +1,19 @@
+import email
+from pickle import TRUE
 from unicodedata import category, name
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, AbstractUser
 from django.urls import reverse
+from .manager import UserManager
+
+class User(AbstractUser):
+    username=None
+    nick_name =models.CharField(max_length=150)
+    email = models.EmailField(unique= TRUE)
+    objects = UserManager()
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS= []
 
 class Student(models.Model):
     user =models.OneToOneField(User,null=True, on_delete=models.CASCADE)

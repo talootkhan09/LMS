@@ -13,3 +13,4 @@ class BookAdmin(admin.ModelAdmin):
 admin.site.register(Student,StudentAdmin)
 admin.site.register(Book, BookAdmin)
 admin.site.register(Order)
+admin.site.register(User)
