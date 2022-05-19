@@ -1,3 +1,6 @@
+from urllib import request
+from django.conf import settings
+from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect
 
 from django.contrib.auth import authenticate, login, logout
@@ -10,39 +13,54 @@ from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.views.generic import (ListView,DetailView,
                                 CreateView,DeleteView,
-                                UpdateView)
+                                UpdateView,TemplateView, View)
 from .models import *
+from . import forms
 from . import models
-from .forms import CreateUserForm,StudentForm
+from .forms import CreateUserForm,StudentForm, UserCreateForm
 from .decorators import unauthenticated_user, allowed_users, admin_only
 from .constants import ADMIN, STUDENT
 from datetime import date
 
-@unauthenticated_user
-def register_page(request):
-
-    form = CreateUserForm()
-    if request.method == 'POST':
-        form = CreateUserForm(request.POST)
+class SignUp(CreateView):
+    form_class = forms.UserCreateForm
+    success_url = reverse_lazy("login")
+    template_name = "accounts/register.html"
+    def post(self, request, *args, **kwargs):
+        pass
+        form = UserCreateForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            username = form.cleaned_data.get('username')
-            email= form.cleaned_data.get('email')
+            user = form.save(commit=False)
+
+            user.save()
 
             group = Group.objects.get(name='student')
+
             user.groups.add(group)
             Student.objects.create(
 				user=user,
-				name=user.username,
+				name=user.nick_name,
 				email=user.email,
 				)
 
-            messages.success(request, f"Account was created for {username}" )
-
             return redirect('login')
 
-    context = {'form':form}
-    return render(request, 'accounts/register.html', context)
+class LoginView(View):
+
+    def post(self, request):
+        email = request.POST['email']
+        password =request.POST['password']
+
+        user = authenticate(request, email=email, password=password)
+
+        if user is not None:
+            login(request, user)
+            return redirect('home')
+        else:
+            messages.info(request, 'Username OR password is incorrect')
+
+        context = {}
+        return render(request, 'accounts/dashboard.html', context)            
 
 @unauthenticated_user
 def login_page(request):
@@ -62,28 +80,26 @@ def login_page(request):
     context = {}
     return render(request, 'accounts/login.html', context)
 
-def logout_user(request):
-    logout(request)
-    return redirect('login')
+class LogoutView(View):
+    def get(self, request):
+        logout(request)
+        return redirect('login')
 
-@login_required(login_url='login')
-@admin_only
-def home(request):
-    orders = Order.objects.all()
-    students = Student.objects.all()
+class Home(PermissionRequiredMixin,TemplateView):
+    permission_required = 'book.add_books'
+    template_name = "accounts/dashboard.html"
+    context_object_name = 'student'
+    model = models.Student
+    def handle_no_permission(self):
+        messages.info(self.request ,self.permission_denied_message)
+        # or specific redirects based on context 
+        return redirect('books')
 
-    total_students = students.count()
-
-    total_orders = orders.count()
-    delivered = orders.filter(status='Delivered').count()
-    pending = orders.filter(status='Pending').count()
-
-    context = {'orders':orders, 'students':students,
-    'total_orders':total_orders, 'total_students':total_students,
-	'delivered':delivered,
-    'pending':pending }
-
-    return render(request, 'accounts/dashboard.html', context)
+    def get_context_data(self, **kwargs):
+        context = super(TemplateView, self).get_context_data(**kwargs)
+        context['student'] = Student.objects.all()
+        context['orders'] = Order.objects.all()
+        return context
 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=[STUDENT])
@@ -161,30 +177,3 @@ class StudentDeleteView(PermissionRequiredMixin,DeleteView):
     model = models.Student
     success_url = reverse_lazy('home')
 
-
-@login_required(login_url='login')
-@allowed_users(allowed_roles=[ADMIN])
-def create_student(request):
-    form = StudentForm()
-    if request.method == 'POST':
-        form = StudentForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            username = form.cleaned_data.get('username')
-            email= form.cleaned_data.get('email')
-
-            group = Group.objects.get(name='student')
-            user.groups.add(group)
-            Student.objects.create(
-				user=user,
-				name=user.username,
-				email=user.email,
-				)
-
-            messages.success(request, f"Account was created for {username}" )
-
-            return redirect('/')
-
-
-    context = {'form':form}
-    return render(request, 'accounts/student_form.html', context)
