@@ -1,0 +1,20 @@
+{% extends 'accounts/main.html' %}
+{% block content %}
+<div class="row">
+	<div class="col-md-6">
+	  <div class="card card-body">
+
+      <h3>Welcome to the List of Books Page!</h3>
+        <ol>
+          {% for book in book_list %}
+          <h4><li><a href="{% url 'book_detail' book.id %}">{{book.name}} </a></li></h4>
+          {% endfor %}
+        </ol>
+
+    </div>
+  
+  </div>
+</div>
+
+
+{% endblock %}

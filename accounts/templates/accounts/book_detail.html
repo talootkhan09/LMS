@@ -1,0 +1,25 @@
+{% extends "accounts/book_list.html" %}
+{% block content %}
+<div class="row">
+	<div class="col-md-6">
+		<div class="card card-body">
+            <table class="table table-sm">
+                <h1>Welcome to the Book Detail Page</h1>
+                <h2>Book Details:</h2>
+                <p>Id_num: {{book_details.id}}</p>
+                <p>Name: {{book_details.name}}</p>
+                <p>Price: {{book_details.price}}</p>
+                <p>Category: {{book_details.category}}</p>
+            </table>
+
+        </div>
+  
+    </div>
+</div>
+{% if request.user.is_staff %}
+  <div class="container">
+    <p><a class='btn btn-warning' href="{% url 'update_book' pk=book_details.pk %}">Update</a></p>
+    <p><a class='btn btn-danger' href="{% url 'delete_book' pk=book_details.pk %}">Delete</a></p>
+  </div>
+{% endif %}
+{% endblock %}
